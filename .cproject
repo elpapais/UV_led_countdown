@@ -59,10 +59,10 @@
 					<folderInfo id="dk.xpg.msp430eclipse.configuration.app.release.471122894." name="/" resourcePath="">
 						<toolChain id="dk.xpg.msp430eclipse.toolchain.gcc.app.release.232940783" name="MSP430 GCC Toolchain" superClass="dk.xpg.msp430eclipse.toolchain.gcc.app.release">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="dk.xpg.msp430eclipse.targetplatform.msp430.1903986850" isAbstract="false" name="MSP430 Cross-Target" osList="all" superClass="dk.xpg.msp430eclipse.targetplatform.msp430"/>
-							<builder buildPath="${workspace_loc:/UV_led}/Release" id="dk.xpg.msp430eclipse.target.gnu.builder.1744212731" managedBuildOn="true" name="MSP430 GNU Make Builder.Release" superClass="dk.xpg.msp430eclipse.target.gnu.builder"/>
+							<builder buildPath="${workspace_loc:/UV_led}/Release" id="dk.xpg.msp430eclipse.target.gnu.builder.1744212731" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="MSP430 GNU Make Builder" superClass="dk.xpg.msp430eclipse.target.gnu.builder"/>
 							<tool id="dk.xpg.msp430eclipse.tool.compiler.gcc.1648944057" name="MSP430 C Compiler" superClass="dk.xpg.msp430eclipse.tool.compiler.gcc">
-								<option defaultValue="dk.xpg.msp430eclipse.compiler.option.optimization.level.most" id="dk.xpg.msp430eclipse.compiler.option.optimization.level.428588508" superClass="dk.xpg.msp430eclipse.compiler.option.optimization.level" valueType="enumerated"/>
-								<option defaultValue="dk.xpg.msp430eclipse.compiler.option.debugging.level.none" id="dk.xpg.msp430eclipse.compiler.option.debugging.level.1092826369" superClass="dk.xpg.msp430eclipse.compiler.option.debugging.level" valueType="enumerated"/>
+								<option defaultValue="dk.xpg.msp430eclipse.compiler.option.optimization.level.most" id="dk.xpg.msp430eclipse.compiler.option.optimization.level.428588508" name="Optimization Level" superClass="dk.xpg.msp430eclipse.compiler.option.optimization.level" valueType="enumerated"/>
+								<option defaultValue="dk.xpg.msp430eclipse.compiler.option.debugging.level.none" id="dk.xpg.msp430eclipse.compiler.option.debugging.level.1092826369" name="Debugging Level" superClass="dk.xpg.msp430eclipse.compiler.option.debugging.level" valueType="enumerated"/>
 								<inputType id="dk.xpg.msp430eclipse.tool.compiler.gcc.input.411240313" name="C Source File" superClass="dk.xpg.msp430eclipse.tool.compiler.gcc.input"/>
 								<inputType id="dk.xpg.msp430eclipse.tool.compiler.gcc.input.cc.847693603" name="C++ Source File" superClass="dk.xpg.msp430eclipse.tool.compiler.gcc.input.cc"/>
 							</tool>
@@ -83,9 +83,15 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="UV_led.dk.xpg.msp430eclipse.project.gcc.elf.2039797066" name="MSP430 Cross Target Application" projectType="dk.xpg.msp430eclipse.project.gcc.elf"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="dk.xpg.msp430eclipse.configuration.app.debug.720952149;dk.xpg.msp430eclipse.configuration.app.debug.720952149.;dk.xpg.msp430eclipse.tool.compiler.gcc.142173236;dk.xpg.msp430eclipse.tool.compiler.gcc.input.1002236202">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="dk.xpg.msp430eclipse.MSP430GCCManagedMakePerProjectProfileC"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="dk.xpg.msp430eclipse.configuration.app.debug.720952149;dk.xpg.msp430eclipse.configuration.app.debug.720952149.;dk.xpg.msp430eclipse.tool.compiler.gcc.142173236;dk.xpg.msp430eclipse.tool.compiler.gcc.input.cc.1378296210">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="dk.xpg.msp430eclipse.MSP430GCCManagedMakePerProjectProfileC"/>
+		</scannerConfigBuildInfo>
+	</storageModule>
 </cproject>

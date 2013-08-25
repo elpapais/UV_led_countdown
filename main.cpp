@@ -25,12 +25,13 @@ unsigned long int ms = 0;
 unsigned char s = 0, m = 0;
 unsigned int button_millis = 0;
 char button_pressed = 0;
-
+unsigned char mem_flash[10];
 
 void binary_leds(unsigned char i);
 void init_io(void);
 void init_timerA(void);
 unsigned long int millis(void);
+
 
 int main()
 {
@@ -42,6 +43,8 @@ int main()
 
 	init_io();
 
+	for(int i = 0; i < 10; i++) mem_flash[i] = 0;
+
 	// interrupts enabled
 	__bis_SR_register(GIE);
 
@@ -52,30 +55,33 @@ void init_io(void)
 {
 	// config outputs
 	P1DIR |= 0x47;
-
+	P1OUT = 0;
+	P2DIR |= 0xFF;
+	P2SEL = 0;
+	P2OUT = 0;
 	// config inputs
-	P1OUT |=  BIT3;                           // P1.3 set, else reset
-	P1REN |= BIT3;                            // P1.3 pullup
-	P1IE |= BIT3;                             // P1.3 interrupt enabled
-	P1IES |= BIT3;                            // P1.3 Hi/lo edge
-	P1IFG &= ~BIT3;                           // P1.3 IFG cleared
+	P1OUT |=  BIT3 + BIT4;                           // P1.3 set, else reset
+	P1REN |= BIT3 + BIT4;                            // P1.3 pullup
+	P1IE |= BIT3 + BIT4;                             // P1.3 interrupt enabled
+	P1IES |= BIT3 + BIT4;                            // P1.3 Hi/lo edge
+	P1IFG &= ~(BIT3 + BIT4);                           // P1.3 IFG cleared
 }
 
 void init_timerA(void)
 {
 	BCSCTL1 = CALBC1_8MHZ;            			// Set DCO to 8MHz
 	DCOCTL = CALDCO_8MHZ;
-	CCTL0 = CCIE;                             // CCR0 interrupt enabled
 	CCR0 = 8000;
-	TACTL = TASSEL_2 + MC_2;                  // SMCLK, count mode
+	TACTL = TASSEL_2 + MC_1;
+	CCTL0 = CCIE;                            // CCR0 interrupt enabled
 }
 
 void binary_leds(unsigned char i)
 {
-	if(i >= 0 && i < 16)
+	if(i >= 0 && i < 9)
 	{
-		P1OUT &= ~0x07;
-		P1OUT |= i & 0x07;
+		P2OUT &= ~0x0F;
+		P2OUT |= i & 0x0F;
 	}
 }
 
@@ -84,11 +90,12 @@ unsigned long int millis(void)
 	return ms + (s * 1000) + (60000 * m);
 }
 
+
+//===========================================================================
 // Timer A0 interrupt service routine
-#pragma vector=TIMERA0_VECTOR
+#pragma vector=TIMER0_A0_VECTOR
 __interrupt void Timer_A (void)
 {
-	CCR0 += 8000;
 	ms++;
 
 	if(ms >= 1000)
@@ -102,21 +109,22 @@ __interrupt void Timer_A (void)
 		m++;
 	}
 
-	if(button_pressed && (P1IN & BIT3))
+	if(button_pressed)
 	{
-		button_pressed = 0;
-
-		if(millis() - button_millis < BUTTON_SHORT_PRESS &&
-				millis() - button_millis >= BUTTON_DEBOUNCE)
+		if((P1IN & (BIT3 + BIT4)) == (BIT3 + BIT4))
 		{
-			LED_GREEN_OFF;
-			LED_RED_ON;
-		}
-		else if(millis() - button_millis < BUTTON_MEDIUM_PRESS &&
-				millis() - button_millis >= BUTTON_SHORT_PRESS)
-		{
-			LED_GREEN_ON;
-			LED_RED_OFF;
+			if(button_pressed == 1)
+			{
+				if(mem_flash[0] < 9)
+				mem_flash[0]++;
+			}
+			else if(button_pressed == 2)
+			{
+				if(mem_flash[0] > 0)
+				mem_flash[0]--;
+			}
+			button_pressed = 0;
+			binary_leds(mem_flash[0]);
 		}
 	}
 
@@ -131,7 +139,12 @@ __interrupt void Port_1(void)
 		button_millis = millis();
 		button_pressed = 1;
 	}
+	if(!(P1IN & BIT4))
+	{
+		button_millis = millis();
+		button_pressed = 2;
+	}
 
-	P1IFG &= ~BIT3;                           // P1.3 IFG cleared
+	P1IFG &= ~(BIT3 + BIT4);                           // P1.3 IFG cleared
 }
 
