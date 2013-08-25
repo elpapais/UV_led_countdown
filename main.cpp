@@ -14,6 +14,13 @@
 #define BUTTON_MEDIUM_PRESS		2000
 #define BUTTON_LONG_PRESS		5000
 
+// LEDs debug
+#define LED_RED_ON				P1OUT |= BIT0;
+#define LED_RED_BLINK			P1OUT ^= BIT0;
+#define LED_RED_OFF				P1OUT &= ~BIT0;
+#define LED_GREEN_ON			P1OUT |= BIT6;
+#define LED_GREEN_OFF			P1OUT &= ~BIT6;
+
 unsigned long int ms = 0;
 unsigned char s = 0, m = 0;
 unsigned int button_millis = 0;
@@ -35,18 +42,19 @@ int main()
 
 	init_io();
 
-
 	// interrupts enabled
 	__bis_SR_register(GIE);
+
+	while(1);
 }
 
 void init_io(void)
 {
 	// config outputs
-	P1DIR |= 0x07;
+	P1DIR |= 0x47;
 
 	// config inputs
-	P1OUT |=  BIT3;                            // P1.3 set, else reset
+	P1OUT |=  BIT3;                           // P1.3 set, else reset
 	P1REN |= BIT3;                            // P1.3 pullup
 	P1IE |= BIT3;                             // P1.3 interrupt enabled
 	P1IES |= BIT3;                            // P1.3 Hi/lo edge
@@ -55,7 +63,7 @@ void init_io(void)
 
 void init_timerA(void)
 {
-	BCSCTL1 = CALBC1_8MHZ;            // Set DCO to 8MHz
+	BCSCTL1 = CALBC1_8MHZ;            			// Set DCO to 8MHz
 	DCOCTL = CALDCO_8MHZ;
 	CCTL0 = CCIE;                             // CCR0 interrupt enabled
 	CCR0 = 8000;
@@ -94,17 +102,36 @@ __interrupt void Timer_A (void)
 		m++;
 	}
 
+	if(button_pressed && (P1IN & BIT3))
+	{
+		button_pressed = 0;
+
+		if(millis() - button_millis < BUTTON_SHORT_PRESS &&
+				millis() - button_millis >= BUTTON_DEBOUNCE)
+		{
+			LED_GREEN_OFF;
+			LED_RED_ON;
+		}
+		else if(millis() - button_millis < BUTTON_MEDIUM_PRESS &&
+				millis() - button_millis >= BUTTON_SHORT_PRESS)
+		{
+			LED_GREEN_ON;
+			LED_RED_OFF;
+		}
+	}
+
 }
 
 // Port 1 interrupt service routine
 #pragma vector=PORT1_VECTOR
 __interrupt void Port_1(void)
 {
-	if(P1IN & BIT3)
+	if(!(P1IN & BIT3))
 	{
 		button_millis = millis();
+		button_pressed = 1;
 	}
 
-	P1IFG &= ~BIT3;                           // P1.4 IFG cleared
+	P1IFG &= ~BIT3;                           // P1.3 IFG cleared
 }
 
