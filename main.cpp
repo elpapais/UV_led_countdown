@@ -27,6 +27,7 @@ unsigned int button_millis = 0;
 char button_pressed = 0;
 unsigned char mem_flash[10];
 unsigned long int last_digit_millis = 0;
+char refresh_display = 0;
 
 void binary_leds(unsigned char i);
 void init_io(void);
@@ -34,11 +35,11 @@ void init_timerA(void);
 unsigned long int millis(void);
 void drive_display(unsigned int n);
 void select_digit(char i);
-
+void init_wdt(void);
 
 int main()
 {
-	WDTCTL = WDTPW + WDTHOLD;                 // Stop WDT
+	init_wdt();
 
 	init_timerA();
 
@@ -51,7 +52,14 @@ int main()
 	// interrupts enabled
 	__bis_SR_register(GIE);
 
-	while(1);
+	while(1)
+	{
+		if(refresh_display)
+		{
+			drive_display(millis()/ 1000);
+			refresh_display = 0;
+		}
+	}
 }
 
 void init_io(void)
@@ -79,6 +87,12 @@ void init_timerA(void)
 	CCTL0 = CCIE;                            // CCR0 interrupt enabled
 }
 
+void init_wdt(void)
+{
+	WDTCTL = WDT_MDLY_8;                     // Set Watchdog Timer interval to ~30ms
+	IE1 |= WDTIE;                             // Enable WDT interrupt
+}
+
 void binary_leds(unsigned char i)
 {
 	if(i >= 0 && i < 10)
@@ -98,33 +112,29 @@ void drive_display(unsigned int n)
 	static char digit = 0;
 	unsigned int temp = n;
 
-	if(millis() - last_digit_millis > 1)
+	select_digit(digit);
+	switch(digit++)
 	{
-		last_digit_millis = millis();
 
-		select_digit(digit);
-		switch(digit++)
-		{
+	case 1:
+		temp /= 1000;
+		binary_leds(temp);
+		break;
+	case 2:
+		temp /= 100;
+		binary_leds(temp % 10);
 
-		case 1:
-			temp /= 1000;
-			binary_leds(temp);
-			break;
-		case 2:
-			temp /= 100;
-			binary_leds(temp % 10);
-
-			break;
-		case 3:
-			temp /= 10;
-			binary_leds(temp % 10);
-			break;
-		case 4:
-			binary_leds(temp % 10);
-			digit = 0;
-			break;
-		}
+		break;
+	case 3:
+		temp /= 10;
+		binary_leds(temp % 10);
+		break;
+	case 4:
+		binary_leds(temp % 10);
+		digit = 0;
+		break;
 	}
+
 }
 
 void select_digit(char i)
@@ -170,7 +180,7 @@ __interrupt void Timer_A (void)
 		s = 0;
 		m++;
 	}
-	drive_display(s);
+
 //	if(button_pressed)
 //	{
 //		if((P1IN & (BIT3 + BIT4)) == (BIT3 + BIT4))
@@ -210,3 +220,9 @@ __interrupt void Port_1(void)
 	P1IFG &= ~(BIT3 + BIT4);                           // P1.3 IFG cleared
 }
 
+// Watchdog Timer interrupt service routine
+#pragma vector=WDT_VECTOR
+__interrupt void watchdog_timer(void)
+{
+	refresh_display = 1;
+}
