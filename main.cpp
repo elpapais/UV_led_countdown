@@ -26,11 +26,14 @@ unsigned char s = 0, m = 0;
 unsigned int button_millis = 0;
 char button_pressed = 0;
 unsigned char mem_flash[10];
+unsigned long int last_digit_millis = 0;
 
 void binary_leds(unsigned char i);
 void init_io(void);
 void init_timerA(void);
 unsigned long int millis(void);
+void drive_display(unsigned int n);
+void select_digit(char i);
 
 
 int main()
@@ -78,7 +81,7 @@ void init_timerA(void)
 
 void binary_leds(unsigned char i)
 {
-	if(i >= 0 && i < 9)
+	if(i >= 0 && i < 10)
 	{
 		P2OUT &= ~0x0F;
 		P2OUT |= i & 0x0F;
@@ -90,6 +93,65 @@ unsigned long int millis(void)
 	return ms + (s * 1000) + (60000 * m);
 }
 
+void drive_display(unsigned int n)
+{
+	static char digit = 0;
+	unsigned int temp = n;
+
+	if(millis() - last_digit_millis > 1)
+	{
+		last_digit_millis = millis();
+
+		select_digit(digit);
+		switch(digit++)
+		{
+
+		case 1:
+			temp /= 1000;
+			binary_leds(temp);
+			break;
+		case 2:
+			temp /= 100;
+			binary_leds(temp % 10);
+
+			break;
+		case 3:
+			temp /= 10;
+			binary_leds(temp % 10);
+			break;
+		case 4:
+			binary_leds(temp % 10);
+			digit = 0;
+			break;
+		}
+	}
+}
+
+void select_digit(char i)
+{
+	switch(i)
+	{
+	case 1:
+		P2OUT |= 0xF0;
+		P2OUT &= ~BIT4;
+		break;
+
+	case 2:
+		P2OUT |= 0xF0;
+		P2OUT &= ~BIT5;
+		break;
+
+	case 3:
+		P2OUT |= 0xF0;
+		P2OUT &= ~BIT6;
+		break;
+
+	case 4:
+		P2OUT |= 0xF0;
+		P2OUT &= ~BIT7;
+		break;
+	}
+}
 
 //===========================================================================
 // Timer A0 interrupt service routine
@@ -108,25 +170,25 @@ __interrupt void Timer_A (void)
 		s = 0;
 		m++;
 	}
-
-	if(button_pressed)
-	{
-		if((P1IN & (BIT3 + BIT4)) == (BIT3 + BIT4))
-		{
-			if(button_pressed == 1)
-			{
-				if(mem_flash[0] < 9)
-				mem_flash[0]++;
-			}
-			else if(button_pressed == 2)
-			{
-				if(mem_flash[0] > 0)
-				mem_flash[0]--;
-			}
-			button_pressed = 0;
-			binary_leds(mem_flash[0]);
-		}
-	}
+	drive_display(s);
+//	if(button_pressed)
+//	{
+//		if((P1IN & (BIT3 + BIT4)) == (BIT3 + BIT4))
+//		{
+//			if(button_pressed == 1)
+//			{
+//				if(mem_flash[0] < 9)
+//				mem_flash[0]++;
+//			}
+//			else if(button_pressed == 2)
+//			{
+//				if(mem_flash[0] > 0)
+//				mem_flash[0]--;
+//			}
+//			button_pressed = 0;
+//			binary_leds(mem_flash[0]);
+//		}
+//	}
 
 }
 
