@@ -68,7 +68,7 @@ int main()
 
 	while(1)
 	{
-
+ 
 		if(refresh_display)
 		{
 			if(op_mode == 0)
