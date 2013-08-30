@@ -34,13 +34,8 @@
 								<inputType id="dk.xpg.msp430eclipse.tool.assembler.input.858486534" name="Assembler Files" superClass="dk.xpg.msp430eclipse.tool.assembler.input"/>
 							</tool>
 							<tool id="dk.xpg.msp430eclipse.tool.linker.gcc.1028034038" name="MSP430 Linker" superClass="dk.xpg.msp430eclipse.tool.linker.gcc">
-								<option id="dk.xpg.msp430eclipse.linker.option.libraries.libraries.1863720582" name="Libraries (-l)" superClass="dk.xpg.msp430eclipse.linker.option.libraries.libraries" valueType="libFiles">
-									<listOptionValue builtIn="false" value="conio"/>
-									<listOptionValue builtIn="false" value="serial"/>
-								</option>
-								<option id="dk.xpg.msp430eclipse.linker.option.libraries.searchPath.219101025" name="Libraries search path (-L)" superClass="dk.xpg.msp430eclipse.linker.option.libraries.searchPath" valueType="libPaths">
-									<listOptionValue builtIn="false" value="/home/joao/msp430/lib"/>
-								</option>
+								<option id="dk.xpg.msp430eclipse.linker.option.libraries.libraries.1863720582" name="Libraries (-l)" superClass="dk.xpg.msp430eclipse.linker.option.libraries.libraries" valueType="libFiles"/>
+								<option id="dk.xpg.msp430eclipse.linker.option.libraries.searchPath.219101025" name="Libraries search path (-L)" superClass="dk.xpg.msp430eclipse.linker.option.libraries.searchPath" valueType="libPaths"/>
 								<inputType id="dk.xpg.msp430eclipse.tool.linker.input.1227857845" name="Object Files" superClass="dk.xpg.msp430eclipse.tool.linker.input"/>
 							</tool>
 							<tool id="dk.xpg.msp430eclipse.tool.archiver.gcc.2138639512" name="MSP430 Archiver" superClass="dk.xpg.msp430eclipse.tool.archiver.gcc"/>
@@ -94,7 +89,14 @@
 		<project id="UV_led.dk.xpg.msp430eclipse.project.gcc.elf.2039797066" name="MSP430 Cross Target Application" projectType="dk.xpg.msp430eclipse.project.gcc.elf"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/UV_led_countdown"/>
+		</configuration>
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/UV_led_countdown"/>
+		</configuration>
+	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		<scannerConfigBuildInfo instanceId="dk.xpg.msp430eclipse.configuration.app.debug.720952149;dk.xpg.msp430eclipse.configuration.app.debug.720952149.;dk.xpg.msp430eclipse.tool.compiler.gcc.142173236;dk.xpg.msp430eclipse.tool.compiler.gcc.input.1002236202">

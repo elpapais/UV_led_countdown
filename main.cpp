@@ -8,17 +8,14 @@
 #include <msp430.h>
 #include "msp430g2231-calibration.h"
 #include "flash.h"
+#include "display.h"
 
-extern "C"
-{
-#include "conio/conio.h"
-#include "serial/serial.h"
-}
 
 #define BUTTON_DEBOUNCE			100
 #define BUTTON_SHORT_PRESS		1000
 #define BUTTON_MEDIUM_PRESS		2000
 #define BUTTON_LONG_PRESS		5000
+
 
 // LEDs debug
 #define LED_RED_ON				P1OUT |= BIT0;
@@ -39,15 +36,12 @@ char refresh_display = 0;
 char op_mode = 0;
 char heart_beat = 0;
 
-void binary_leds(unsigned char i);
+
 void init_io(void);
 void init_timerA(void);
 unsigned long int millis(void);
-void drive_display(unsigned int n);
-void select_digit(char i);
 void init_wdt(void);
-unsigned int sec2sec_display(unsigned int s);
-unsigned int sec2min_display(unsigned int s);
+
 
 int main()
 {
@@ -57,7 +51,7 @@ int main()
 
 	flash_init();
 
-	//serial_init(57600);
+	read_SegC(mem_flash, 10, 0);
 
 	init_io();
 
@@ -73,19 +67,23 @@ int main()
 		{
 			if(op_mode == 0)
 			{
-				drive_display(goal);
+				drive_display(goal, 1, 1);
 			}
-			else
+			else if(op_mode == 1)
 			{
 				long int disp = goal - ((millis() / 1000) - init_time);
 				if(disp >=  0)
 				{
-					drive_display(goal - ((millis() / 1000) - init_time));
+					drive_display(goal - ((millis() / 1000) - init_time), heart_beat, heart_beat);
 				}
 				else
 				{
 					op_mode = 0;
 				}
+			}
+			else if(op_mode == 2)
+			{
+				drive_display(0xFF,mem_flash[0], 1, 1);
 			}
 			refresh_display = 0;
 		}
@@ -97,7 +95,7 @@ int main()
 			{
 				button_pressed = 0;
 
-				if(op_mode == 0)
+				if(op_mode != 1)
 				{
 					op_mode = 1;
 					init_time = millis() / 1000;
@@ -112,10 +110,24 @@ int main()
 		{
 			if((P1IN & BIT4))
 			{
-				if(millis() - button_millis > BUTTON_DEBOUNCE)
+				if(op_mode == 0)
 				{
-					button_pressed = 0;
-					goal -= 10;
+					if(millis() - button_millis > BUTTON_DEBOUNCE &&
+							millis() - button_millis <= BUTTON_SHORT_PRESS)
+					{
+						button_pressed = 0;
+						goal -= 10;
+					}
+					else if(millis() - button_millis > BUTTON_SHORT_PRESS &&
+							millis() - button_millis <= BUTTON_MEDIUM_PRESS)
+					{
+						button_millis = 0;
+						write_SegC(mem_flash,10);
+					}
+				}
+				else if(op_mode == 2)
+				{
+
 				}
 			}
 		}
@@ -127,6 +139,12 @@ int main()
 				{
 					button_pressed = 0;
 					goal += 10;
+				}
+				else if(millis() - button_millis > BUTTON_SHORT_PRESS &&
+						millis() - button_millis <= BUTTON_MEDIUM_PRESS)
+				{
+					button_millis = 0;
+					op_mode = 2;
 				}
 			}
 		}
@@ -173,91 +191,9 @@ void init_wdt(void)
 	IE1 |= WDTIE;                             // Enable WDT interrupt
 }
 
-void binary_leds(unsigned char i)
-{
-	if(i >= 0 && i < 16)
-	{
-		P2OUT &= ~0x0F;
-		P2OUT |= i & 0x0F;
-	}
-}
-
 unsigned long int millis(void)
 {
 	return ms + (s * 1000) + (60000 * m);
-}
-
-void drive_display(unsigned int n/*, char point_up, char point_down*/)
-{
-	static char digit = 1;
-
-	binary_leds(15);
-	select_digit(digit);
-	unsigned int temp;
-
-	switch(digit)
-	{
-
-	case 1:
-		temp = sec2min_display(n);
-		temp /= 10;
-		binary_leds(temp);
-		break;
-	case 2:
-		temp = sec2min_display(n);
-
-		binary_leds(temp % 10);
-
-		break;
-	case 3:
-		temp = sec2sec_display(n);
-		temp /= 10;
-		binary_leds(temp % 10);
-		break;
-	case 4:
-		temp = sec2sec_display(n);
-		binary_leds(temp % 10);
-		break;
-	}
-	digit++;
-	if(digit > 4) digit = 1;
-
-}
-
-void select_digit(char i)
-{
-	switch(i)
-	{
-	case 1:
-		P2OUT |= 0xF0;
-		P2OUT &= ~BIT4;
-		break;
-
-	case 2:
-		P2OUT |= 0xF0;
-		P2OUT &= ~BIT5;
-		break;
-
-	case 3:
-		P2OUT |= 0xF0;
-		P2OUT &= ~BIT6;
-		break;
-
-	case 4:
-		P2OUT |= 0xF0;
-		P2OUT &= ~BIT7;
-		break;
-	}
-}
-
-unsigned int sec2sec_display(unsigned int s)
-{
-	return s % 60;
-}
-
-unsigned int sec2min_display(unsigned int s)
-{
-	return s / 60;
 }
 
 //===========================================================================
