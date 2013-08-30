@@ -116,7 +116,7 @@ int main()
 							millis() - button_millis <= BUTTON_SHORT_PRESS)
 					{
 						button_pressed = 0;
-						goal -= 10;
+						goal -= 60;
 					}
 					else if(millis() - button_millis > BUTTON_SHORT_PRESS &&
 							millis() - button_millis <= BUTTON_MEDIUM_PRESS)
@@ -138,7 +138,7 @@ int main()
 				if(millis() - button_millis > BUTTON_DEBOUNCE)
 				{
 					button_pressed = 0;
-					goal += 10;
+					goal += 60;
 				}
 				else if(millis() - button_millis > BUTTON_SHORT_PRESS &&
 						millis() - button_millis <= BUTTON_MEDIUM_PRESS)
