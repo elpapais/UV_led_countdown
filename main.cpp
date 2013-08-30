@@ -9,6 +9,12 @@
 #include "msp430g2231-calibration.h"
 #include "flash.h"
 
+extern "C"
+{
+#include "conio/conio.h"
+#include "serial/serial.h"
+}
+
 #define BUTTON_DEBOUNCE			100
 #define BUTTON_SHORT_PRESS		1000
 #define BUTTON_MEDIUM_PRESS		2000
@@ -22,12 +28,16 @@
 #define LED_GREEN_OFF			P1OUT &= ~BIT6;
 
 unsigned long int ms = 0;
-unsigned char s = 0, m = 0;
+unsigned long int s = 0, m = 0;
 unsigned int button_millis = 0;
 char button_pressed = 0;
 unsigned char mem_flash[10];
 unsigned long int last_digit_millis = 0;
+unsigned long int goal = 0;
+unsigned long int init_time = 0;
 char refresh_display = 0;
+char op_mode = 0;
+char heart_beat = 0;
 
 void binary_leds(unsigned char i);
 void init_io(void);
@@ -36,6 +46,8 @@ unsigned long int millis(void);
 void drive_display(unsigned int n);
 void select_digit(char i);
 void init_wdt(void);
+unsigned int sec2sec_display(unsigned int s);
+unsigned int sec2min_display(unsigned int s);
 
 int main()
 {
@@ -44,6 +56,8 @@ int main()
 	init_timerA();
 
 	flash_init();
+
+	//serial_init(57600);
 
 	init_io();
 
@@ -54,10 +68,76 @@ int main()
 
 	while(1)
 	{
+
 		if(refresh_display)
 		{
-			drive_display(millis()/ 1000);
+			if(op_mode == 0)
+			{
+				drive_display(goal);
+			}
+			else
+			{
+				long int disp = goal - ((millis() / 1000) - init_time);
+				if(disp >=  0)
+				{
+					drive_display(goal - ((millis() / 1000) - init_time));
+				}
+				else
+				{
+					op_mode = 0;
+				}
+			}
 			refresh_display = 0;
+		}
+
+
+		if(button_pressed == 3)
+		{
+			if((P1IN & BIT3) && (P1IN & BIT4))
+			{
+				button_pressed = 0;
+
+				if(op_mode == 0)
+				{
+					op_mode = 1;
+					init_time = millis() / 1000;
+				}
+				else
+				{
+					op_mode = 0;
+				}
+			}
+		}
+		else if(button_pressed == 2 && op_mode == 0)
+		{
+			if((P1IN & BIT4))
+			{
+				if(millis() - button_millis > BUTTON_DEBOUNCE)
+				{
+					button_pressed = 0;
+					goal -= 10;
+				}
+			}
+		}
+		else if(button_pressed == 1 && op_mode == 0)
+		{
+			if((P1IN & BIT3))
+			{
+				if(millis() - button_millis > BUTTON_DEBOUNCE)
+				{
+					button_pressed = 0;
+					goal += 10;
+				}
+			}
+		}
+
+		if(op_mode)
+		{
+			LED_GREEN_ON;
+		}
+		else
+		{
+			LED_GREEN_OFF;
 		}
 	}
 }
@@ -65,7 +145,7 @@ int main()
 void init_io(void)
 {
 	// config outputs
-	P1DIR |= 0x47;
+	P1DIR |= 0x41;
 	P1OUT = 0;
 	P2DIR |= 0xFF;
 	P2SEL = 0;
@@ -95,7 +175,7 @@ void init_wdt(void)
 
 void binary_leds(unsigned char i)
 {
-	if(i >= 0 && i < 10)
+	if(i >= 0 && i < 16)
 	{
 		P2OUT &= ~0x0F;
 		P2OUT |= i & 0x0F;
@@ -107,33 +187,40 @@ unsigned long int millis(void)
 	return ms + (s * 1000) + (60000 * m);
 }
 
-void drive_display(unsigned int n)
+void drive_display(unsigned int n/*, char point_up, char point_down*/)
 {
-	static char digit = 0;
-	unsigned int temp = n;
+	static char digit = 1;
 
+	binary_leds(15);
 	select_digit(digit);
-	switch(digit++)
+	unsigned int temp;
+
+	switch(digit)
 	{
 
 	case 1:
-		temp /= 1000;
+		temp = sec2min_display(n);
+		temp /= 10;
 		binary_leds(temp);
 		break;
 	case 2:
-		temp /= 100;
+		temp = sec2min_display(n);
+
 		binary_leds(temp % 10);
 
 		break;
 	case 3:
+		temp = sec2sec_display(n);
 		temp /= 10;
 		binary_leds(temp % 10);
 		break;
 	case 4:
+		temp = sec2sec_display(n);
 		binary_leds(temp % 10);
-		digit = 0;
 		break;
 	}
+	digit++;
+	if(digit > 4) digit = 1;
 
 }
 
@@ -163,6 +250,16 @@ void select_digit(char i)
 	}
 }
 
+unsigned int sec2sec_display(unsigned int s)
+{
+	return s % 60;
+}
+
+unsigned int sec2min_display(unsigned int s)
+{
+	return s / 60;
+}
+
 //===========================================================================
 // Timer A0 interrupt service routine
 #pragma vector=TIMER0_A0_VECTOR
@@ -181,24 +278,14 @@ __interrupt void Timer_A (void)
 		m++;
 	}
 
-//	if(button_pressed)
-//	{
-//		if((P1IN & (BIT3 + BIT4)) == (BIT3 + BIT4))
-//		{
-//			if(button_pressed == 1)
-//			{
-//				if(mem_flash[0] < 9)
-//				mem_flash[0]++;
-//			}
-//			else if(button_pressed == 2)
-//			{
-//				if(mem_flash[0] > 0)
-//				mem_flash[0]--;
-//			}
-//			button_pressed = 0;
-//			binary_leds(mem_flash[0]);
-//		}
-//	}
+	if(ms > 500)
+	{
+		heart_beat = 0;
+	}
+	else
+	{
+		heart_beat = 1;
+	}
 
 }
 
@@ -215,6 +302,10 @@ __interrupt void Port_1(void)
 	{
 		button_millis = millis();
 		button_pressed = 2;
+	}
+	if(!(P1IN & (BIT3 + BIT4)))
+	{
+		button_pressed = 3;
 	}
 
 	P1IFG &= ~(BIT3 + BIT4);                           // P1.3 IFG cleared
