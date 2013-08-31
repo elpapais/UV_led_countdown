@@ -11,10 +11,11 @@
 #include "display.h"
 
 
-#define BUTTON_DEBOUNCE			100
+#define BUTTON_DEBOUNCE			200
 #define BUTTON_SHORT_PRESS		1000
 #define BUTTON_MEDIUM_PRESS		2000
 #define BUTTON_LONG_PRESS		5000
+#define GOAL_TIME_STEP			10
 
 
 // LEDs debug
@@ -26,7 +27,7 @@
 
 unsigned long int ms = 0;
 unsigned long int s = 0, m = 0;
-unsigned int button_millis = 0;
+unsigned long int button_millis = 0;
 char button_pressed = 0;
 unsigned char mem_flash[10];
 unsigned long int last_digit_millis = 0;
@@ -35,6 +36,7 @@ unsigned long int init_time = 0;
 char refresh_display = 0;
 char op_mode = 0;
 char heart_beat = 0;
+char prog = 0;
 
 
 void init_io(void);
@@ -83,7 +85,25 @@ int main()
 			}
 			else if(op_mode == 2)
 			{
-				drive_display(0xFF,mem_flash[0], 1, 1);
+				if(heart_beat)
+				{
+					drive_display(0xF, prog, 0xF, mem_flash[prog], 1, 0);
+				}
+				else
+				{
+					drive_display(0xF, 0xF, 0xF, mem_flash[prog], 1, 0);
+				}
+			}
+			else if(op_mode == 3)
+			{
+				if(heart_beat)
+				{
+					drive_display(0xF, prog, 0xF, mem_flash[prog], 0, 1);
+				}
+				else
+				{
+					drive_display(0xF, prog, 0xF, 0xF, 0, 1);
+				}
 			}
 			refresh_display = 0;
 		}
@@ -93,20 +113,57 @@ int main()
 		{
 			if((P1IN & BIT3) && (P1IN & BIT4))
 			{
-				button_pressed = 0;
+				if(op_mode == 0)
+				{
+					if(millis() - button_millis > BUTTON_DEBOUNCE &&
+							millis() - button_millis <= BUTTON_SHORT_PRESS)
+					{
+						button_pressed = 0;
 
-				if(op_mode != 1)
-				{
-					op_mode = 1;
-					init_time = millis() / 1000;
+						if(op_mode != 1)
+						{
+							op_mode = 1;
+							init_time = millis() / 1000;
+						}
+						else
+						{
+							op_mode = 0;
+						}
+					}
+					else if(millis() - button_millis > BUTTON_SHORT_PRESS &&
+								millis() - button_millis <= BUTTON_MEDIUM_PRESS)
+					{
+						button_pressed = 0;
+					}
+					else if(millis() - button_millis > BUTTON_MEDIUM_PRESS)
+					{
+						button_pressed = 0;
+					}
 				}
-				else
+				else if(op_mode == 2)
 				{
-					op_mode = 0;
+					if(millis() - button_millis > BUTTON_DEBOUNCE &&
+							millis() - button_millis <= BUTTON_SHORT_PRESS)
+					{
+						button_pressed = 0;
+
+						op_mode = 3;
+					}
 				}
+				else if(op_mode == 3)
+				{
+					if(millis() - button_millis > BUTTON_DEBOUNCE &&
+							millis() - button_millis <= BUTTON_SHORT_PRESS)
+					{
+						button_pressed = 0;
+
+						op_mode = 0;
+					}
+				}
+
 			}
 		}
-		else if(button_pressed == 2 && op_mode == 0)
+		else if(button_pressed == 2)
 		{
 			if((P1IN & BIT4))
 			{
@@ -116,7 +173,11 @@ int main()
 							millis() - button_millis <= BUTTON_SHORT_PRESS)
 					{
 						button_pressed = 0;
-						goal -= 60;
+
+						if(goal >= GOAL_TIME_STEP)
+						{
+							goal -= GOAL_TIME_STEP;
+						}
 					}
 					else if(millis() - button_millis > BUTTON_SHORT_PRESS &&
 							millis() - button_millis <= BUTTON_MEDIUM_PRESS)
@@ -124,27 +185,61 @@ int main()
 						button_millis = 0;
 						write_SegC(mem_flash,10);
 					}
+					else if(millis() - button_millis > BUTTON_MEDIUM_PRESS)
+					{
+						button_pressed = 0;
+					}
 				}
 				else if(op_mode == 2)
 				{
+					if(millis() - button_millis > BUTTON_DEBOUNCE &&
+							millis() - button_millis <= BUTTON_SHORT_PRESS)
+					{
+						button_pressed = 0;
 
+						if(prog > 0)
+						{
+							prog--;
+						}
+					}
 				}
 			}
 		}
-		else if(button_pressed == 1 && op_mode == 0)
+		else if(button_pressed == 1)
 		{
 			if((P1IN & BIT3))
 			{
-				if(millis() - button_millis > BUTTON_DEBOUNCE)
+				if(op_mode == 0)
 				{
-					button_pressed = 0;
-					goal += 60;
+					if(millis() - button_millis > BUTTON_DEBOUNCE &&
+							millis() - button_millis <= BUTTON_SHORT_PRESS)
+					{
+						button_pressed = 0;
+						goal += GOAL_TIME_STEP;
+					}
+					else if(millis() - button_millis > BUTTON_SHORT_PRESS &&
+							millis() - button_millis <= BUTTON_MEDIUM_PRESS)
+					{
+						button_millis = 0;
+						op_mode = 2;
+					}
+					else if(millis() - button_millis > BUTTON_MEDIUM_PRESS)
+					{
+						button_pressed = 0;
+					}
 				}
-				else if(millis() - button_millis > BUTTON_SHORT_PRESS &&
-						millis() - button_millis <= BUTTON_MEDIUM_PRESS)
+				else if(op_mode == 2)
 				{
-					button_millis = 0;
-					op_mode = 2;
+					if(millis() - button_millis > BUTTON_DEBOUNCE &&
+							millis() - button_millis <= BUTTON_SHORT_PRESS)
+					{
+						button_pressed = 0;
+
+						if(prog < 5)
+						{
+							prog++;
+						}
+					}
 				}
 			}
 		}
@@ -153,7 +248,7 @@ int main()
 		{
 			LED_GREEN_ON;
 		}
-		else
+		else if(op_mode == 0)
 		{
 			LED_GREEN_OFF;
 		}
@@ -163,7 +258,7 @@ int main()
 void init_io(void)
 {
 	// config outputs
-	P1DIR |= 0x41;
+	P1DIR |= 0x41 + BIT7;
 	P1OUT = 0;
 	P2DIR |= 0xFF;
 	P2SEL = 0;
@@ -229,20 +324,23 @@ __interrupt void Timer_A (void)
 #pragma vector=PORT1_VECTOR
 __interrupt void Port_1(void)
 {
-	if(!(P1IN & BIT3))
+	if(!(P1IN & (BIT3 + BIT4)))
+	{
+		button_millis = millis();
+		button_pressed = 3;
+		P1OUT ^= BIT0;
+	}
+	else if(!(P1IN & BIT3) && button_pressed != 3)
 	{
 		button_millis = millis();
 		button_pressed = 1;
 	}
-	if(!(P1IN & BIT4))
+	else if(!(P1IN & BIT4) && button_pressed != 3)
 	{
 		button_millis = millis();
 		button_pressed = 2;
 	}
-	if(!(P1IN & (BIT3 + BIT4)))
-	{
-		button_pressed = 3;
-	}
+
 
 	P1IFG &= ~(BIT3 + BIT4);                           // P1.3 IFG cleared
 }

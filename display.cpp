@@ -13,7 +13,8 @@ void drive_display(unsigned int n, char point_up, char point_down)
 	static char digit = 1;
 
 	binary_leds(15);
-	P1OUT |= TWO_POINT_PIN;
+
+	P1OUT &= ~TWO_POINT_PIN;
 	select_digit(digit);
 	unsigned int temp;
 
@@ -31,7 +32,7 @@ void drive_display(unsigned int n, char point_up, char point_down)
 
 		if(point_up)
 		{
-			P1OUT &= ~TWO_POINT_PIN;
+			P1OUT |= TWO_POINT_PIN;
 		}
 		break;
 	case 3:
@@ -42,7 +43,7 @@ void drive_display(unsigned int n, char point_up, char point_down)
 
 		if(point_down)
 		{
-			P1OUT &= ~TWO_POINT_PIN;
+			P1OUT |= TWO_POINT_PIN;
 		}
 		break;
 	case 4:
@@ -55,12 +56,12 @@ void drive_display(unsigned int n, char point_up, char point_down)
 
 }
 
-void drive_display(unsigned short l, unsigned short r, char point_up, char point_down)
+void drive_display(unsigned short l1, unsigned short l2, unsigned short r1, unsigned short r2, char point_down, char point_up)
 {
 	static char digit = 1;
 
 	binary_leds(15);
-	P1OUT |= TWO_POINT_PIN;
+	P1OUT &= ~TWO_POINT_PIN;
 	select_digit(digit);
 	unsigned int temp;
 
@@ -68,27 +69,27 @@ void drive_display(unsigned short l, unsigned short r, char point_up, char point
 	{
 
 	case 1:
-		binary_leds((l>>8));
+		binary_leds(l1 & 0x0F);
 		break;
 	case 2:
-		binary_leds(l & 0x0F);
+		binary_leds(l2 & 0x0F);
 
 		if(point_up)
 		{
-			P1OUT &= ~TWO_POINT_PIN;
+			P1OUT |= TWO_POINT_PIN;
 		}
 		break;
 	case 3:
 
-		binary_leds(r >> 8);
+		binary_leds(r1 & 0x0F);
 
 		if(point_down)
 		{
-			P1OUT &= ~TWO_POINT_PIN;
+			P1OUT |= TWO_POINT_PIN;
 		}
 		break;
 	case 4:
-		binary_leds(r & 0x0F);
+		binary_leds(r2 & 0x0F);
 		break;
 	}
 	digit++;
