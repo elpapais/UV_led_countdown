@@ -16,8 +16,8 @@
 #define BUTTON_MEDIUM_PRESS		2000
 #define BUTTON_LONG_PRESS		5000
 #define GOAL_TIME_STEP			10
-
-
+#define MAX_TIME_UV				3600
+#define DEFAULT_PROG_INDEX		5
 // LEDs debug
 #define LED_RED_ON				P1OUT |= BIT0;
 #define LED_RED_BLINK			P1OUT ^= BIT0;
@@ -29,14 +29,14 @@ unsigned long int ms = 0;
 unsigned long int s = 0, m = 0;
 unsigned long int button_millis = 0;
 char button_pressed = 0;
-unsigned char mem_flash[10];
+unsigned char mem_flash[10]={5,7,9,10,0,3,0,0,0,0};
 unsigned long int last_digit_millis = 0;
 unsigned long int goal = 0;
 unsigned long int init_time = 0;
 char refresh_display = 0;
 char op_mode = 0;
 char heart_beat = 0;
-char prog = 0;
+unsigned char prog = 0;
 
 
 void init_io(void);
@@ -47,24 +47,27 @@ void init_wdt(void);
 
 int main()
 {
+
 	init_wdt();
 
 	init_timerA();
 
 	flash_init();
-
+	//write_SegC(mem_flash,10);
 	read_SegC(mem_flash, 10, 0);
+
+	prog = mem_flash[DEFAULT_PROG_INDEX];
 
 	init_io();
 
-	for(int i = 0; i < 10; i++) mem_flash[i] = 0;
+	goal = mem_flash[prog] * 60;
 
 	// interrupts enabled
 	__bis_SR_register(GIE);
 
 	while(1)
 	{
- 
+
 		if(refresh_display)
 		{
 			if(op_mode == 0)
@@ -131,7 +134,7 @@ int main()
 						}
 					}
 					else if(millis() - button_millis > BUTTON_SHORT_PRESS &&
-								millis() - button_millis <= BUTTON_MEDIUM_PRESS)
+							millis() - button_millis <= BUTTON_MEDIUM_PRESS)
 					{
 						button_pressed = 0;
 					}
@@ -147,7 +150,13 @@ int main()
 					{
 						button_pressed = 0;
 
-						op_mode = 3;
+						op_mode = 1;
+						init_time = millis() / 1000;
+						goal = mem_flash[prog] * 60;
+					}
+					else
+					{
+						button_pressed = 0;
 					}
 				}
 				else if(op_mode == 3)
@@ -157,7 +166,26 @@ int main()
 					{
 						button_pressed = 0;
 
+						op_mode = 4;
+					}
+					else
+					{
+						button_pressed = 0;
+					}
+				}
+				else if(op_mode == 4)
+				{
+					if(millis() - button_millis > BUTTON_DEBOUNCE &&
+							millis() - button_millis <= BUTTON_SHORT_PRESS)
+					{
+						button_pressed = 0;
+						mem_flash[DEFAULT_PROG_INDEX] = prog;
+						write_SegC(mem_flash, 10);
 						op_mode = 0;
+					}
+					else
+					{
+						button_pressed = 0;
 					}
 				}
 
@@ -183,14 +211,15 @@ int main()
 							millis() - button_millis <= BUTTON_MEDIUM_PRESS)
 					{
 						button_millis = 0;
-						write_SegC(mem_flash,10);
+
+						op_mode = 3;
 					}
 					else if(millis() - button_millis > BUTTON_MEDIUM_PRESS)
 					{
 						button_pressed = 0;
 					}
 				}
-				else if(op_mode == 2)
+				else if(op_mode == 2 || op_mode == 3)
 				{
 					if(millis() - button_millis > BUTTON_DEBOUNCE &&
 							millis() - button_millis <= BUTTON_SHORT_PRESS)
@@ -201,6 +230,27 @@ int main()
 						{
 							prog--;
 						}
+					}
+					else
+					{
+						button_pressed = 0;
+					}
+				}
+				else if(op_mode == 4)
+				{
+					if(millis() - button_millis > BUTTON_DEBOUNCE &&
+							millis() - button_millis <= BUTTON_SHORT_PRESS)
+					{
+						button_pressed = 0;
+
+						if(mem_flash[prog] >= GOAL_TIME_STEP)
+						{
+							mem_flash[prog] -= GOAL_TIME_STEP;
+						}
+					}
+					else
+					{
+						button_pressed = 0;
 					}
 				}
 			}
@@ -215,7 +265,11 @@ int main()
 							millis() - button_millis <= BUTTON_SHORT_PRESS)
 					{
 						button_pressed = 0;
-						goal += GOAL_TIME_STEP;
+
+						if(goal < MAX_TIME_UV)
+						{
+							goal += GOAL_TIME_STEP;
+						}
 					}
 					else if(millis() - button_millis > BUTTON_SHORT_PRESS &&
 							millis() - button_millis <= BUTTON_MEDIUM_PRESS)
@@ -228,7 +282,7 @@ int main()
 						button_pressed = 0;
 					}
 				}
-				else if(op_mode == 2)
+				else if(op_mode == 2 || op_mode == 3)
 				{
 					if(millis() - button_millis > BUTTON_DEBOUNCE &&
 							millis() - button_millis <= BUTTON_SHORT_PRESS)
@@ -239,6 +293,27 @@ int main()
 						{
 							prog++;
 						}
+					}
+					else
+					{
+						button_pressed = 0;
+					}
+				}
+				else if(op_mode == 4)
+				{
+					if(millis() - button_millis > BUTTON_DEBOUNCE &&
+							millis() - button_millis <= BUTTON_SHORT_PRESS)
+					{
+						button_pressed = 0;
+
+						if(mem_flash[prog] <= MAX_TIME_UV)
+						{
+							mem_flash[prog] += MAX_TIME_UV;
+						}
+					}
+					else
+					{
+						button_pressed = 0;
 					}
 				}
 			}
