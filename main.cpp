@@ -15,7 +15,7 @@
 #define BUTTON_SHORT_PRESS		1000
 #define BUTTON_MEDIUM_PRESS		2000
 #define BUTTON_LONG_PRESS		5000
-#define GOAL_TIME_STEP			10
+#define GOAL_TIME_STEP			60
 #define MAX_TIME_UV				3600
 #define DEFAULT_PROG_INDEX		5
 // LEDs debug
@@ -86,7 +86,7 @@ int main()
 					op_mode = 0;
 				}
 			}
-			else if(op_mode == 2)
+			else if(op_mode == 2 || op_mode == 3)
 			{
 				if(heart_beat)
 				{
@@ -97,7 +97,7 @@ int main()
 					drive_display(0xF, 0xF, 0xF, mem_flash[prog], 1, 0);
 				}
 			}
-			else if(op_mode == 3)
+			else if(op_mode == 4)
 			{
 				if(heart_beat)
 				{
@@ -243,9 +243,9 @@ int main()
 					{
 						button_pressed = 0;
 
-						if(mem_flash[prog] >= GOAL_TIME_STEP)
+						if(mem_flash[prog] >= GOAL_TIME_STEP/60)
 						{
-							mem_flash[prog] -= GOAL_TIME_STEP;
+							mem_flash[prog] -= GOAL_TIME_STEP/60;
 						}
 					}
 					else
@@ -308,7 +308,7 @@ int main()
 
 						if(mem_flash[prog] <= MAX_TIME_UV)
 						{
-							mem_flash[prog] += MAX_TIME_UV;
+							mem_flash[prog] += GOAL_TIME_STEP/60;
 						}
 					}
 					else
