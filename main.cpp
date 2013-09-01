@@ -90,18 +90,18 @@ int main()
 			{
 				if(heart_beat)
 				{
-					drive_display(0xF, prog, 0xF, mem_flash[prog], 1, 0);
+					drive_display(0xF, prog, mem_flash[prog] / 10, mem_flash[prog] % 10, 1, 0);
 				}
 				else
 				{
-					drive_display(0xF, 0xF, 0xF, mem_flash[prog], 1, 0);
+					drive_display(0xF, 0xF, mem_flash[prog] / 10, mem_flash[prog] % 10, 1, 0);
 				}
 			}
 			else if(op_mode == 4)
 			{
 				if(heart_beat)
 				{
-					drive_display(0xF, prog, 0xF, mem_flash[prog], 0, 1);
+					drive_display(0xF, prog, mem_flash[prog] / 10, mem_flash[prog] % 10, 0, 1);
 				}
 				else
 				{
