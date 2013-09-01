@@ -44,7 +44,6 @@ void init_timerA(void);
 unsigned long int millis(void);
 void init_wdt(void);
 
-
 int main()
 {
 
@@ -67,7 +66,6 @@ int main()
 
 	while(1)
 	{
-
 		if(refresh_display)
 		{
 			if(op_mode == 0)
@@ -403,7 +401,6 @@ __interrupt void Port_1(void)
 	{
 		button_millis = millis();
 		button_pressed = 3;
-		P1OUT ^= BIT0;
 	}
 	else if(!(P1IN & BIT3) && button_pressed != 3)
 	{
