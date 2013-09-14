@@ -12,9 +12,9 @@
 
 
 #define BUTTON_DEBOUNCE			200
-#define BUTTON_SHORT_PRESS		1000
-#define BUTTON_MEDIUM_PRESS		2000
-#define BUTTON_LONG_PRESS		5000
+#define BUTTON_SHORT_PRESS		2000
+#define BUTTON_MEDIUM_PRESS		4000
+#define BUTTON_LONG_PRESS		6000
 #define GOAL_TIME_STEP			60
 #define MAX_TIME_UV				3600
 #define DEFAULT_PROG_INDEX		5
@@ -317,7 +317,7 @@ int main()
 			}
 		}
 
-		if(op_mode)
+		if(op_mode == 1)
 		{
 			LED_GREEN_ON;
 		}
